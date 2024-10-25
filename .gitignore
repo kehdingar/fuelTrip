@@ -1,0 +1,77 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.eggs/
+dist/
+build/
+develop-eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+eggs/
+
+# IDE files
+.idea/
+*.iml
+*.suo
+*.csproj
+*.sln
+*.user
+*.userprefs
+*.VC.db
+*.opendb
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Package files
+*.egg-info
+*.dist-info
+
+# Local configuration files
+local_settings.py
+.env  #Environment variables file (if using one)
+
+# Logs
+logs/
+
+# Test files (if you don't want to commit test results)
+*.log
+.coverage
+.tox/
+htmlcov/
+coverage.xml
+
+# Django specific
+db.sqlite3  #Replace with your actual database file if not using a managed database
+media/
+staticfiles/ #This is where collected static files go
+.DS_Store
+
+# Docker related
+# Dockerfile
+# docker-compose.yml
+.dockerignore
+
+# IDE specific files
+*.py[cod]
+*.swp
+*.swo
+.cache
+.ropeproject
+*.log
+*.tmp
+*#
