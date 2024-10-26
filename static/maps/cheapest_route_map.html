@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_586e46343492466275d3d73e63eb7718 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_586e46343492466275d3d73e63eb7718" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_586e46343492466275d3d73e63eb7718 = L.map(
+                "map_586e46343492466275d3d73e63eb7718",
+                {
+                    center: [40.7126819, -74.006577],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 5,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_7d7da5641658cf4dc885e7ce1a46d6f5 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+        
+    
+            tile_layer_7d7da5641658cf4dc885e7ce1a46d6f5.addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var poly_line_b897203ea657efb62d76d60b4ec16b05 = L.polyline(
+                [[40.7130598, -74.0072308], [40.715221, -74.0132095], [40.7423607, -74.0087193], [40.7423339, -74.0085297], [40.7522421, -74.0008627], [40.7522042, -73.9993731], [40.7545404, -73.9979209], [40.756586, -73.9950259], [40.7631296, -74.0094858], [40.7766651, -74.0427192], [40.868148, -74.1847215], [40.8714606, -74.1900079], [40.8862102, -74.2156042], [40.8954184, -74.2481782], [40.8977901, -74.2515681], [40.9816374, -75.1372741], [40.9853357, -75.1382996], [41.1108836, -80.8290634], [41.5916949, -87.2283819], [41.5847011, -87.2353198], [41.5778976, -87.541958], [41.5782456, -87.67051959999999], [41.5798133, -87.6764219], [41.4403399, -90.3215232], [41.5975348, -90.6757358], [41.5968753, -93.77722829999999], [41.2231144, -95.9960612], [41.1509109, -96.15527960000001], [41.0358373, -102.1373714], [41.0249913, -102.1586647], [39.7883387, -105.0682091], [38.5796738, -112.5991174], [34.4300033, -117.3779515], [34.4268008, -117.3819355], [34.4266155, -117.3775311], [34.3830799, -117.4113734], [34.383057, -117.4141007], [34.2354499, -117.4239505], [34.1424968, -117.4888521], [34.1203061, -117.8374162], [34.1329241, -117.9518149], [34.1328273, -117.9587494], [34.0726185, -117.9996183], [34.0667169, -118.0186037], [34.0708293, -118.0483862], [34.0554787, -118.198992], [34.0526581, -118.2253631], [34.05648, -118.2414784], [34.0571037, -118.2405998], [34.0549244, -118.2426796], [34.0549009, -118.242651]],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 5}
+            ).addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var marker_c6090f205d654b14914724e9429cb30e = L.marker(
+                [40.7126819, -74.006577],
+                {}
+            ).addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var icon_3694c604f1b13a5c1510b37194a0e4bc = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "green", "prefix": "glyphicon"}
+            );
+            marker_c6090f205d654b14914724e9429cb30e.setIcon(icon_3694c604f1b13a5c1510b37194a0e4bc);
+        
+    
+        var popup_a19d9979296fea6959f58e2e975462c3 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_90b6d45c9b4c4de1756ca58bef5af917 = $(`<div id="html_90b6d45c9b4c4de1756ca58bef5af917" style="width: 100.0%; height: 100.0%;">Start</div>`)[0];
+                popup_a19d9979296fea6959f58e2e975462c3.setContent(html_90b6d45c9b4c4de1756ca58bef5af917);
+            
+        
+
+        marker_c6090f205d654b14914724e9429cb30e.bindPopup(popup_a19d9979296fea6959f58e2e975462c3)
+        ;
+
+        
+    
+    
+            var marker_068464e257c546a591897d368295ec8e = L.marker(
+                [34.0549009, -118.242651],
+                {}
+            ).addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var icon_c274f690c027ec7ebc4241f413388f7d = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "red", "prefix": "glyphicon"}
+            );
+            marker_068464e257c546a591897d368295ec8e.setIcon(icon_c274f690c027ec7ebc4241f413388f7d);
+        
+    
+        var popup_c40e525d267797ee69715eacf20119f4 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_4059f93bb3c51b484113f52ccac27472 = $(`<div id="html_4059f93bb3c51b484113f52ccac27472" style="width: 100.0%; height: 100.0%;">End</div>`)[0];
+                popup_c40e525d267797ee69715eacf20119f4.setContent(html_4059f93bb3c51b484113f52ccac27472);
+            
+        
+
+        marker_068464e257c546a591897d368295ec8e.bindPopup(popup_c40e525d267797ee69715eacf20119f4)
+        ;
+
+        
+    
+    
+            var marker_47e6fa2f44cbc684d72ad662feaa03fb = L.marker(
+                [40.6743995, -74.0005746],
+                {}
+            ).addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var icon_7f86f73f1519004ed8ac6314d7bf8baf = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "purple", "prefix": "glyphicon"}
+            );
+            marker_47e6fa2f44cbc684d72ad662feaa03fb.setIcon(icon_7f86f73f1519004ed8ac6314d7bf8baf);
+        
+    
+        var popup_bd84f3f850b631c62165374c9b0d11bf = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_f589535636ed14eadb8bcd1a60ddd52a = $(`<div id="html_f589535636ed14eadb8bcd1a60ddd52a" style="width: 100.0%; height: 100.0%;">Car wash & Detailing Center, Viking Auto Spa, Oil Change & Repair Services. 354 Hamilton Avenue, Brooklyn 5542 meters</div>`)[0];
+                popup_bd84f3f850b631c62165374c9b0d11bf.setContent(html_f589535636ed14eadb8bcd1a60ddd52a);
+            
+        
+
+        marker_47e6fa2f44cbc684d72ad662feaa03fb.bindPopup(popup_bd84f3f850b631c62165374c9b0d11bf)
+        ;
+
+        
+    
+    
+            var marker_8eb1894ce9bae1debcbe30691a0061ee = L.marker(
+                [40.6749163, -74.0001623],
+                {}
+            ).addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var icon_95b5e479b625c71c2c6fc53d7055c6cb = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "purple", "prefix": "glyphicon"}
+            );
+            marker_8eb1894ce9bae1debcbe30691a0061ee.setIcon(icon_95b5e479b625c71c2c6fc53d7055c6cb);
+        
+    
+        var popup_9f7b66f7bedbabcc7d98de33c7f1999d = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_9643911ec1712c492a6f72d3323abae7 = $(`<div id="html_9643911ec1712c492a6f72d3323abae7" style="width: 100.0%; height: 100.0%;">bp 327 Hamilton Avenue, Brooklyn 5831 meters</div>`)[0];
+                popup_9f7b66f7bedbabcc7d98de33c7f1999d.setContent(html_9643911ec1712c492a6f72d3323abae7);
+            
+        
+
+        marker_8eb1894ce9bae1debcbe30691a0061ee.bindPopup(popup_9f7b66f7bedbabcc7d98de33c7f1999d)
+        ;
+
+        
+    
+    
+            var marker_f02a6005b4f7ba8f61c6ff4fb7adde2d = L.marker(
+                [40.6742308, -74.00047769999999],
+                {}
+            ).addTo(map_586e46343492466275d3d73e63eb7718);
+        
+    
+            var icon_697ff03447ebc4a7736f4ceb2db54c20 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "purple", "prefix": "glyphicon"}
+            );
+            marker_f02a6005b4f7ba8f61c6ff4fb7adde2d.setIcon(icon_697ff03447ebc4a7736f4ceb2db54c20);
+        
+    
+        var popup_ad5ae9930897b7cbab16f49f5208d164 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_1a97de8f1587ecd40f21861e0e984ba9 = $(`<div id="html_1a97de8f1587ecd40f21861e0e984ba9" style="width: 100.0%; height: 100.0%;">Sunoco 354 Hamilton Avenue, Brooklyn 5665 meters</div>`)[0];
+                popup_ad5ae9930897b7cbab16f49f5208d164.setContent(html_1a97de8f1587ecd40f21861e0e984ba9);
+            
+        
+
+        marker_f02a6005b4f7ba8f61c6ff4fb7adde2d.bindPopup(popup_ad5ae9930897b7cbab16f49f5208d164)
+        ;
+
+        
+    
+</script>
+</html>

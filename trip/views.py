@@ -1,131 +1,177 @@
+import csv
 import os
 import googlemaps
 import folium
-from geopy.distance import great_circle
-from difflib import SequenceMatcher
-from django.conf import settings
-from django.http import JsonResponse
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import TripInputSerializer
-import pandas as pd
-from collections import defaultdict
+from rest_framework.response import Response
+from fuzzywuzzy import fuzz
 from concurrent.futures import ThreadPoolExecutor
+from django.conf import settings
 
-def similar(a, b):
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio() * 100
+from .serializers import TripInputSerializer
 
-fuel_data_dict = defaultdict(dict)
-fuel_data = pd.read_csv('fuel.csv')
-for _, row in fuel_data.iterrows():
-    city = row['City'].strip().lower()
-    name = row['Truckstop Name'].strip().lower()
-    price = row['Retail Price']
-    if pd.notna(price):
-        fuel_data_dict[city][name] = price
+# load truck stop data from CSV
+def load_truck_stops(file_path):
+    truck_stops = []
+    with open(file_path, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            truck_stops.append(row)
+    return truck_stops
+
+def find_matching_stops(fuel_stop, truck_stops):
+    matches = []
+    for truck_stop in truck_stops:
+        name_match = fuzz.ratio(fuel_stop['name'], truck_stop['Truckstop Name']) >= 90
+        city_match = fuzz.ratio(fuel_stop['city'], truck_stop['City']) >= 90
+        if name_match and city_match:
+            matches.append(truck_stop)
+    return matches
+
+def create_map(route, fuel_stops, request):
+    start_location = route['start_location']
+    end_location = route['end_location']
+    m = folium.Map(location=[start_location['lat'], start_location['lng']], zoom_start=5)
+
+    # draw the route on the map
+    folium.PolyLine(
+        locations=[(step['end_location']['lat'], step['end_location']['lng']) for step in route['steps']],
+        color='blue',
+        weight=5,
+        opacity=0.8
+    ).add_to(m)
+
+    # Add markers for the start and end locations
+    folium.Marker(
+        location=[start_location['lat'], start_location['lng']],
+        popup="Start",
+        icon=folium.Icon(color="green")
+    ).add_to(m)
+
+    folium.Marker(
+        location=[end_location['lat'], end_location['lng']],
+        popup="End",
+        icon=folium.Icon(color="red")
+    ).add_to(m)
+
+    # Add fuel stop markers
+    for stop in fuel_stops:
+        folium.Marker(
+            location=[stop['location']['lat'], stop['location']['lng']],
+            popup=f"{stop['name']}\n{stop['city']}\n{stop.get('distance', 'Unknown')} meters",
+            icon=folium.Icon(color="blue" if stop.get('matched') else "purple")  # Different color for matched stops
+        ).add_to(m)
+
+    # Save the map as HTML
+    map_filename = 'cheapest_route_map.html'
+    map_filepath = os.path.join(settings.BASE_DIR, 'static', 'maps', map_filename)
+    os.makedirs(os.path.dirname(map_filepath), exist_ok=True)
+    m.save(map_filepath)
+
+    # Construct the map URL
+    map_url = request.build_absolute_uri(f'/static/maps/{map_filename}')
+    return map_url
 
 class FuelTripView(APIView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serializer = TripInputSerializer(data=request.data)
-        if serializer.is_valid():
-            start_location = serializer.validated_data['start_location']
-            end_location = serializer.validated_data['end_location']
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
 
-            # Initialize Google Maps Client
-            gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
+        start_address = serializer.validated_data.get('start_location')
+        end_address = serializer.validated_data.get('end_location')
 
-            # Get directions with alternatives
-            directions_result = gmaps.directions(start_location, end_location, alternatives=True)
+        if not start_address or not end_address:
+            return Response({"error": "Start and end addresses are required."}, status=400)
 
-            if not directions_result:
-                return Response({"error": "No routes found."}, status=status.HTTP_404_NOT_FOUND)
+        api_key = settings.GOOGLE_MAPS_API_KEY
+        gmaps = googlemaps.Client(key=api_key)
 
-            shortest_route = min(directions_result, key=lambda x: x['legs'][0]['distance']['value'])
-            fuel_stops = []
+        truck_stops = load_truck_stops('fuel.csv')
 
-            for step in shortest_route['legs'][0]['steps']:
-                places_result = gmaps.places_nearby(
-                    location=(step['end_location']['lat'], step['end_location']['lng']),
-                    radius=5000,
-                    type='gas_station'
-                )
-                fuel_stops.extend(places_result.get('results', []))
+        try:
+            directions_result = gmaps.directions(
+                origin=start_address,
+                destination=end_address,
+                mode="driving",
+                alternatives=True
+            )
+        except googlemaps.exceptions.TransportError as e:
+            return Response({"error": f"Error fetching directions: {e}"}, status=500)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
-            matched_stops = []
-            unique_matches = set()
+        cheapest_route = None
+        lowest_cost = float('inf')
 
-            def find_best_match(stop_name, city):
-                if city in fuel_data_dict:
-                    best_match = None
-                    best_ratio = 0
-                    for name in fuel_data_dict[city].keys():
-                        ratio = similar(name, stop_name)
-                        if ratio > best_ratio:
-                            best_ratio = ratio
-                            best_match = name
-                    if best_ratio >= 90:
-                        return best_match, fuel_data_dict[city][best_match]
-                return None
+        for route in directions_result:
+            if 'legs' in route and route['legs']:
+                route_distance = route['legs'][0]['distance']['value']
+                fuel_stops = []
+                car_range = 500 * 1609.34
+                fuel_efficiency = 10
 
-            # Use ThreadPoolExecutor for parallel processing of matches
-            with ThreadPoolExecutor() as executor:
-                futures = []
-                for stop in fuel_stops:
-                    stop_name = stop['name'].lower()
-                    stop_city = stop['vicinity'].split(', ')[-1].lower()
-                    futures.append(executor.submit(find_best_match, stop_name, stop_city))
+                total_fuel_needed = route_distance / (fuel_efficiency * 1609.34)
 
-                for future in futures:
-                    result = future.result()
-                    if result:
-                        matched_stops.append((stop, result[1], result[0]))
+                for step in route['legs'][0]['steps']:
+                    gas_stations = gmaps.places_nearby(
+                        location=step['end_location'],
+                        radius=150,
+                        type='gas_station'
+                    )
+                    for gas_station in gas_stations['results']:
+                        distance_matrix_result = gmaps.distance_matrix(
+                            origins=[start_address],
+                            destinations=[gas_station['geometry']['location']]
+                        )
+                        distance_to_gas_station = distance_matrix_result['rows'][0]['elements'][0]['distance']['value']
 
-            total_cost = 0
-            max_range_miles = 500
-            mpg = 10
-            remaining_distance_to_destination_miles = shortest_route['legs'][0]['distance']['value'] * 0.000621371
-            current_fuel_level_miles = max_range_miles
-            necessary_stops = []
+                        fuel_stop = {
+                            'name': gas_station['name'],
+                            'city': gas_station['vicinity'],
+                            'distance': distance_to_gas_station,
+                            'location': gas_station['geometry']['location']
+                        }
 
-            for i, (stop, price_per_gallon, name) in enumerate(matched_stops):
-                stop_location_coords = (stop['geometry']['location']['lat'], stop['geometry']['location']['lng'])
-                origin_coords = (shortest_route['legs'][0]['start_location']['lat'],
-                                 shortest_route['legs'][0]['start_location']['lng'])
-                distance_to_stop_miles = great_circle(origin_coords, stop_location_coords).miles
-                gallons_needed_to_reach_stop = distance_to_stop_miles / mpg
+                        if not fuel_stops or distance_to_gas_station + fuel_stops[-1]['distance'] <= car_range:
+                            fuel_stops.append(fuel_stop)
 
-                if gallons_needed_to_reach_stop > current_fuel_level_miles:
-                    continue
+                matched_stops = []
+                with ThreadPoolExecutor() as executor:
+                    # Check for matches on the CSV file
+                    futures = [executor.submit(find_matching_stops, stop, truck_stops) for stop in fuel_stops]
+                    for i, future in enumerate(futures):
+                        matches = future.result()
+                        if matches:
+                            # Update stop with matched data
+                            fuel_stops[i]['matched'] = True
+                            matched_stops.extend(matches)
+                            # Set fuel price from matched stop
+                            fuel_stops[i]['price'] = min(float(match['Retail Price']) for match in matches)
 
-                total_cost += gallons_needed_to_reach_stop * price_per_gallon
-                necessary_stops.append(stop)
+                # Determine the fuel price to use
+                if matched_stops:
+                    fuel_price = min(float(stop['Retail Price']) for stop in matched_stops)
+                else:
+                    # Default approximate price if fuel stop match is not found on fuel.csv
+                    fuel_price = 3.6
 
-            # Create the Folium map
-            start_location_coords = (shortest_route['legs'][0]['start_location']['lat'],
-                                     shortest_route['legs'][0]['start_location']['lng'])
-            end_location_coords = (shortest_route['legs'][0]['end_location']['lat'],
-                                   shortest_route['legs'][0]['end_location']['lng'])
-            m = folium.Map(location=start_location_coords, zoom_start=6)
-            folium.Marker(start_location_coords, tooltip='Start: ' + str(start_location), icon=folium.Icon(color='red')).add_to(m)
-            folium.Marker(end_location_coords, tooltip='End: ' + str(end_location), icon=folium.Icon(color='green')).add_to(m)
+                total_cost = total_fuel_needed * fuel_price
 
-            # Draw polyline from start to end
-            route_coords = [(step['end_location']['lat'], step['end_location']['lng']) for step in shortest_route['legs'][0]['steps']]
-            folium.PolyLine(locations=[(shortest_route['legs'][0]['start_location']['lat'], shortest_route['legs'][0]['start_location']['lng'])] + route_coords, color='blue').add_to(m)
+                if total_cost < lowest_cost:
+                    lowest_cost = total_cost
+                    cheapest_route = {
+                        'total_cost': f"${total_cost:.2f}",
+                        'steps': route['legs'][0]['steps'],
+                        'start_location': route['legs'][0]['start_location'],
+                        'end_location': route['legs'][0]['end_location']
+                    }
 
-            for stop in necessary_stops:
-                stop_location = (stop['geometry']['location']['lat'], stop['geometry']['location']['lng'])
-                folium.Marker(stop_location, tooltip=stop['name'], icon=folium.Icon(color='blue')).add_to(m)
-
-            map_filename = "route_with_fuel_stops.html"
-            map_filepath = os.path.join(settings.BASE_DIR, 'static', 'maps', map_filename)
-            os.makedirs(os.path.dirname(map_filepath), exist_ok=True)
-            m.save(map_filepath)
-
-            # Construct the map URL
-            map_url = request.build_absolute_uri(f'/static/maps/{map_filename}')
-
-            return JsonResponse({"total_cost": f"${total_cost:.2f}", "map_url": map_url}, status=status.HTTP_200_OK)
+        if cheapest_route:
+            map_link = create_map(cheapest_route, fuel_stops, request)
+            return Response({
+                'total_cost': cheapest_route['total_cost'],
+                'map_link': map_link,
+            })
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No routes found"}, status=404)
